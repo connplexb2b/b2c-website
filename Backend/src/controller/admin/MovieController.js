@@ -393,7 +393,6 @@ export const getMoviesForGenerateUniqueCode = async (req, res) => {
 
     const matchConditions = {
       status: 1,
-      isActive: true,
       deletedStatus: 0,
       cinemaObjectId: { $exists: true, $nin: [null, ""] },
       filmCode: { $exists: true, $nin: [null, ""] },
