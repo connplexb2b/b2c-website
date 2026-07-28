@@ -1811,9 +1811,7 @@ const GenerateUniqueCodeModal = (props) => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const selectableIds = movieList
-        .filter((item) => !item?.uniqueFilmCode || item?.uniqueFilmCode === rowData?.uniqueFilmCode)
-        .map((item) => item._id);
+      const selectableIds = movieList.map((item) => item._id);
 
       setSelectedMovies(selectableIds);
     } else {
@@ -1983,20 +1981,14 @@ const GenerateUniqueCodeModal = (props) => {
                         size="small"
                         checked={
                           movieList?.length > 0 &&
-                          movieList
-                            .filter((item) => !item?.uniqueFilmCode || item?.uniqueFilmCode === rowData?.uniqueFilmCode)
-                            .every((item) => selectedMovies.includes(item._id))
+                          movieList.every((item) => selectedMovies.includes(item._id))
                         }
                         indeterminate={
                           selectedMovies.length > 0 &&
-                          movieList
-                            .filter((item) => !item?.uniqueFilmCode || item?.uniqueFilmCode === rowData?.uniqueFilmCode)
-                            .some((item) =>
-                              selectedMovies.includes(item._id)
-                            ) &&
-                          !movieList
-                            .filter((item) => !item?.uniqueFilmCode || item?.uniqueFilmCode === rowData?.uniqueFilmCode)
-                            .every((item) => selectedMovies.includes(item._id))
+                          movieList.some((item) =>
+                            selectedMovies.includes(item._id)
+                          ) &&
+                          !movieList.every((item) => selectedMovies.includes(item._id))
                         }
                         onChange={handleSelectAll}
                       />
@@ -2050,7 +2042,6 @@ const GenerateUniqueCodeModal = (props) => {
                             selectedMovies?.includes(item?._id)
                           }
                           onChange={(e) => handleMovieSelection(e, item?._id)}
-                          disabled={!!item?.uniqueFilmCode && item?.uniqueFilmCode !== rowData?.uniqueFilmCode}
                         />
                       </Index.TableCell>
                     </Index.TableRow>
