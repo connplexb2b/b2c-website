@@ -91,6 +91,42 @@ const StyledInputBase = Index.styled(Index.InputBase)(({ theme }) => ({
   },
 }));
 
+const getTicketAmount = (item) => {
+  if (item?.commitBookingData?.curTicketsTotal !== undefined) {
+    return item.commitBookingData.curTicketsTotal;
+  }
+  if (item?.addSeatData?.curTicketsTotal !== undefined) {
+    return item.addSeatData.curTicketsTotal;
+  }
+  if (item?.finalBookingCalculation?.ticketCart?.total !== undefined) {
+    const combinedTotal = item.finalBookingCalculation.ticketCart.total;
+    const foodTotal = item?.addSeatData?.curFoodTotal || 0;
+    if (foodTotal > 0 && combinedTotal > foodTotal) {
+      return combinedTotal - foodTotal;
+    }
+    return combinedTotal;
+  }
+  return 0;
+};
+
+const getFoodAmount = (item) => {
+  let baseFood = 0;
+  if (item?.commitBookingData?.curFoodTotal !== undefined) {
+    baseFood = item.commitBookingData.curFoodTotal;
+  } else if (item?.foodAndBvgResponse?.curFoodTotal !== undefined) {
+    baseFood = item.foodAndBvgResponse.curFoodTotal;
+  } else if (item?.addSeatData?.curFoodTotal !== undefined) {
+    baseFood = item.addSeatData.curFoodTotal;
+  } else if (item?.finalBookingCalculation?.foodCart?.total !== undefined) {
+    baseFood = item.finalBookingCalculation.foodCart.total;
+  }
+  
+  if (baseFood > 0) {
+    return Math.round(baseFood * 1.05 * 100) / 100;
+  }
+  return 0;
+};
+
 const FailedTransaction = () => {
   const { adminLoginData } = PagesIndex.useSelector(
     (state) => state?.admin?.AdminSlice
@@ -478,15 +514,15 @@ const FailedTransaction = () => {
           return isPaymentFail || isBookingFail;
         })
         .map((item) => {
-          const ticketTotal = item?.finalBookingCalculation?.ticketCart?.total;
-          const foodTotal = item?.finalBookingCalculation?.foodCart?.total;
+          const ticketTotal = getTicketAmount(item);
+          const foodTotal = getFoodAmount(item);
           const convFees =
             item?.finalBookingCalculation?.convenienceFeesObject
               ?.convenienceFees;
           const gst = item?.finalBookingCalculation?.convenienceFeesObject?.gst;
           const membershipDiscount =
             item?.finalBookingCalculation?.ticketCart?.membershipDiscount;
-          const responseAmt = item?.paymentResponse?.amount;
+          const responseAmt = item?.paymentResponse?.amount || item?.finalBookingCalculation?.finalAmount;
 
           return {
             cinema_name: item?.cinemaData?.cinemaName || "-",
@@ -824,12 +860,8 @@ const FailedTransaction = () => {
                               </Index.TableCell>
 
                               <Index.TableCell>
-                                {item?.finalBookingCalculation?.ticketCart
-                                  ?.total
-                                  ? Number(
-                                      item?.finalBookingCalculation?.ticketCart
-                                        ?.total
-                                    ).toLocaleString("en-IN", {
+                                {getTicketAmount(item)
+                                  ? getTicketAmount(item).toLocaleString("en-IN", {
                                       style: "currency",
                                       currency: "INR",
                                     })

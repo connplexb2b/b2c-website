@@ -54,6 +54,42 @@ const StyledInputBase = Index.styled(Index.InputBase)(({ theme }) => ({
   },
 }));
 
+const getTicketAmount = (item) => {
+  if (item?.commitBookingData?.curTicketsTotal !== undefined) {
+    return item.commitBookingData.curTicketsTotal;
+  }
+  if (item?.addSeatData?.curTicketsTotal !== undefined) {
+    return item.addSeatData.curTicketsTotal;
+  }
+  if (item?.finalBookingCalculation?.ticketCart?.total !== undefined) {
+    const combinedTotal = item.finalBookingCalculation.ticketCart.total;
+    const foodTotal = item?.addSeatData?.curFoodTotal || 0;
+    if (foodTotal > 0 && combinedTotal > foodTotal) {
+      return combinedTotal - foodTotal;
+    }
+    return combinedTotal;
+  }
+  return 0;
+};
+
+const getFoodAmount = (item) => {
+  let baseFood = 0;
+  if (item?.commitBookingData?.curFoodTotal !== undefined) {
+    baseFood = item.commitBookingData.curFoodTotal;
+  } else if (item?.foodAndBvgResponse?.curFoodTotal !== undefined) {
+    baseFood = item.foodAndBvgResponse.curFoodTotal;
+  } else if (item?.addSeatData?.curFoodTotal !== undefined) {
+    baseFood = item.addSeatData.curFoodTotal;
+  } else if (item?.finalBookingCalculation?.foodCart?.total !== undefined) {
+    baseFood = item.finalBookingCalculation.foodCart.total;
+  }
+  
+  if (baseFood > 0) {
+    return Math.round(baseFood * 1.05 * 100) / 100;
+  }
+  return 0;
+};
+
 const TransactionHistory = () => {
   const { adminLoginData } = PagesIndex.useSelector(
     (state) => state?.admin?.AdminSlice
@@ -403,17 +439,19 @@ const TransactionHistory = () => {
         Booking_id: item?.addSeatData?.strBookId
           ? item?.addSeatData?.strBookId
           : "-",
-        ticket_amount: item?.finalBookingCalculation?.ticketCart?.total
-          ? typeof item?.finalBookingCalculation?.ticketCart?.total === "string"
-            ? item?.finalBookingCalculation?.ticketCart?.total
-            : item?.finalBookingCalculation?.ticketCart?.total || 0
+        ticket_amount: getTicketAmount(item)
+          ? getTicketAmount(item).toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            })
           : "-",
 
-        fandBAmount: item?.finalBookingCalculation?.ticketCart?.total
-          ? typeof item?.finalBookingCalculation?.ticketCart?.total === "string"
-            ? item?.finalBookingCalculation?.ticketCart?.total
-            : item?.finalBookingCalculation?.foodCart?.total || 0
-          : "-",
+        fandBAmount: getFoodAmount(item)
+          ? getFoodAmount(item).toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            })
+          : "₹0.00",
 
         ConvenienceFee: item?.finalBookingCalculation?.convenienceFeesObject
           ? item?.finalBookingCalculation?.convenienceFeesObject
@@ -435,9 +473,10 @@ const TransactionHistory = () => {
         //     : "-",
 
         total_amountincTax:
-          item?.finalBookingCalculation.finalAmount &&
-          !isNaN(parseFloat(item?.finalBookingCalculation.finalAmount))
-            ? parseFloat(item?.finalBookingCalculation.finalAmount)
+          item?.paymentResponse?.amount && !isNaN(parseFloat(item?.paymentResponse?.amount))
+            ? parseFloat(item?.paymentResponse?.amount)
+            : item?.finalBookingCalculation?.finalAmount && !isNaN(parseFloat(item?.finalBookingCalculation?.finalAmount))
+            ? parseFloat(item?.finalBookingCalculation?.finalAmount)
             : "-",
 
         // Only view status 1 for Success and 4 & 5 for Fail
@@ -691,32 +730,20 @@ const TransactionHistory = () => {
                             </Index.TableCell>
 
                             <Index.TableCell>
-                              {item?.finalBookingCalculation?.ticketCart?.total
-                                ? (typeof item?.finalBookingCalculation
-                                    ?.ticketCart?.total === "string"
-                                    ? item?.finalBookingCalculation?.ticketCart
-                                        ?.total
-                                    : item?.finalBookingCalculation?.ticketCart
-                                        ?.total || 0
-                                  )?.toLocaleString("en-IN", {
+                              {getTicketAmount(item)
+                                ? getTicketAmount(item).toLocaleString("en-IN", {
                                     style: "currency",
                                     currency: "INR",
                                   })
                                 : "-"}
                             </Index.TableCell>
                             <Index.TableCell>
-                              {item?.finalBookingCalculation?.ticketCart?.total
-                                ? (typeof item?.finalBookingCalculation
-                                    ?.ticketCart?.total === "string"
-                                    ? item?.finalBookingCalculation?.ticketCart
-                                        ?.total
-                                    : item?.finalBookingCalculation?.foodCart
-                                        ?.total || 0
-                                  )?.toLocaleString("en-IN", {
+                              {getFoodAmount(item)
+                                ? getFoodAmount(item).toLocaleString("en-IN", {
                                     style: "currency",
                                     currency: "INR",
                                   })
-                                : "-"}
+                                : "₹0.00"}
                             </Index.TableCell>
                             <Index.TableCell>
                               {item?.finalBookingCalculation
