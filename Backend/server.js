@@ -1,5 +1,7 @@
 import "dotenv/config";
 import cors from "cors";
+import axios from "axios";
+import https from "https";
 import { CronJob } from "cron";
 import * as dotenv from "dotenv";
 import fs from "fs";
@@ -55,21 +57,62 @@ app.get("/api/uploads/:file", async (req, res) => {
       return res.sendFile(path.resolve(localPath));
     }
 
-    // 2. Otherwise, fetch from AWS S3
-    const command = new GetObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: `uploads/${fileName}`,
-    });
-    const s3Response = await s3.send(command);
+    // 2. Otherwise, fetch from AWS S3 if credentials are valid
+    const hasValidAWSCredentials = 
+      process.env.AWS_ACCESS_KEY_ID && 
+      process.env.AWS_ACCESS_KEY_ID !== "dummy_access_key" && 
+      process.env.AWS_SECRET_ACCESS_KEY && 
+      process.env.AWS_SECRET_ACCESS_KEY !== "dummy_secret_key" && 
+      process.env.S3_BUCKET_NAME && 
+      process.env.S3_BUCKET_NAME !== "dummy-bucket";
 
-    // Set correct content type
-    res.setHeader("Content-Type", s3Response.ContentType || "image/jpeg");
-    
-    // Pipe the S3 stream directly to the response
-    s3Response.Body.pipe(res);
+    if (hasValidAWSCredentials) {
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: `uploads/${fileName}`,
+        });
+        const s3Response = await s3.send(command);
+
+        // Set correct content type
+        res.setHeader("Content-Type", s3Response.ContentType || "image/jpeg");
+        
+        // Pipe the S3 stream directly to the response
+        s3Response.Body.pipe(res);
+        return;
+      } catch (s3Error) {
+        console.error("S3 fetch error:", s3Error);
+      }
+    }
+
+    // 3. Fallback: Fetch from production backend directly
+    try {
+      const prodUrl = `https://backend.theconnplex.com/api/uploads/${fileName}`;
+      const response = await axios.get(prodUrl, {
+        responseType: "arraybuffer",
+        timeout: 2500
+      });
+      
+      const contentType = response.headers["content-type"] || "image/jpeg";
+      res.setHeader("Content-Type", contentType);
+      
+      // Ensure local uploads directory exists
+      const dir = path.dirname(localPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // Save locally to cache it
+      fs.writeFileSync(localPath, response.data);
+
+      res.send(response.data);
+    } catch (fallbackError) {
+      console.error("[Uploads Route] Fallback production fetch error:", fallbackError.message);
+      res.status(404).send("File not found");
+    }
   } catch (error) {
-    console.error("S3 fetch error:", error);
-    res.status(404).send("File not found");
+    console.error("Upload route error:", error);
+    res.status(500).send("Internal server error");
   }
 });
 app.use(

@@ -75,7 +75,7 @@ userRouter.get("/get-cinema-by-region/:regionId", cinema.getCinemasByRegion);
 //#region Movies
 userRouter.get(
   "/get-movies-by-region/:regionId",
-  // cacheMiddleware((req) => cacheKeys.moviesDataByRegion(req.params.regionId)),
+  cacheMiddleware((req) => cacheKeys.moviesDataByRegion(req.params.regionId)),
   movies.getMoviesByRegion
 );
 
