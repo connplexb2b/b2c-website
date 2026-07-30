@@ -506,7 +506,7 @@ const AddCoupon = () => {
                         className="form-control"
                         placeholder="Enter Coupon code title"
                         value={formik.values.couponTitle}
-                        inputProps={{ maxLength: 12 }}
+                        inputProps={{ maxLength: 25 }}
                         onChange={(e) => {
                           const input = e.target;
                           const start = input.selectionStart;
@@ -516,8 +516,8 @@ const AddCoupon = () => {
                             .toUpperCase()
                             .replace(/[^A-Z0-9]/g, "");
 
-                          if (newValue.length > 12) {
-                            newValue = newValue.slice(0, 12);
+                          if (newValue.length > 25) {
+                            newValue = newValue.slice(0, 25);
                           }
 
                           formik.setFieldValue("couponTitle", newValue);

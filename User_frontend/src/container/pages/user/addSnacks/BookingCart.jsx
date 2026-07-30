@@ -747,12 +747,13 @@ console.log({selectedFood});
                   name="coupencode"
                   value={coupenCode}
                   disabled={ticketCart?.coupons?.length > 0}
+                  inputProps={{ maxLength: 25 }}
                   onChange={(e) => {
                     const newValue = e.target.value
                       .toUpperCase()
                       .replace(/[^A-Z0-9]/g, "");
 
-                    if (newValue.length <= 12) {
+                    if (newValue.length <= 25) {
                       setCoupenCode(newValue);
                     }
                   }}

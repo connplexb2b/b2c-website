@@ -235,11 +235,12 @@ const MembershipCouponModal = ({
                     id="promoCode"
                     placeholder="Enter your Promocode"
                     value={couponCode}
+                    inputProps={{ maxLength: 25 }}
                     onChange={(e) => {
                       const newValue = e.target.value
                         .toUpperCase()
                         .replace(/[^A-Z0-9]/g, "");
-                      if (newValue.length <= 12) {
+                      if (newValue.length <= 25) {
                         setCouponCode(newValue);
                         setCouponError("");
                       }
