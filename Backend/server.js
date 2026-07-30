@@ -85,29 +85,33 @@ app.get("/api/uploads/:file", async (req, res) => {
       }
     }
 
-    // 3. Fallback: Fetch from production backend directly
-    try {
-      const prodUrl = `https://backend.theconnplex.com/api/uploads/${fileName}`;
-      const response = await axios.get(prodUrl, {
-        responseType: "arraybuffer",
-        timeout: 2500
-      });
-      
-      const contentType = response.headers["content-type"] || "image/jpeg";
-      res.setHeader("Content-Type", contentType);
-      
-      // Ensure local uploads directory exists
-      const dir = path.dirname(localPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+    // 3. Fallback: Fetch from production backend directly (ONLY in local development/test environments)
+    if (!hasValidAWSCredentials) {
+      try {
+        const prodUrl = `https://backend.theconnplex.com/api/uploads/${fileName}`;
+        const response = await axios.get(prodUrl, {
+          responseType: "arraybuffer",
+          timeout: 2500
+        });
+        
+        const contentType = response.headers["content-type"] || "image/jpeg";
+        res.setHeader("Content-Type", contentType);
+        
+        // Ensure local uploads directory exists
+        const dir = path.dirname(localPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Save locally to cache it
+        fs.writeFileSync(localPath, response.data);
+
+        res.send(response.data);
+      } catch (fallbackError) {
+        console.error("[Uploads Route] Fallback production fetch error:", fallbackError.message);
+        res.status(404).send("File not found");
       }
-
-      // Save locally to cache it
-      fs.writeFileSync(localPath, response.data);
-
-      res.send(response.data);
-    } catch (fallbackError) {
-      console.error("[Uploads Route] Fallback production fetch error:", fallbackError.message);
+    } else {
       res.status(404).send("File not found");
     }
   } catch (error) {
