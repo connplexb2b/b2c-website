@@ -191,16 +191,16 @@ app.get("/:initTransId", async (req, res) => {
 // );
 // CinemaDataSyncJob.start();
 
-// const globalNotificationCron = new CronJob(
-//   "*/15 * * * *", // Every 10 minutes
-//   function () {
-//     globalNotification();
-//   },
-//   null,
-//   true,
-//   "Asia/Kolkata"
-// );
-// globalNotificationCron.start();
+const globalNotificationCron = new CronJob(
+  "*/15 * * * *", // Every 15 minutes
+  function () {
+    globalNotification();
+  },
+  null,
+  true,
+  "Asia/Kolkata"
+);
+globalNotificationCron.start();
 
 // const notificationCron = new CronJob(
 //   "* * * * *",
