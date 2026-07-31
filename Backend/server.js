@@ -74,12 +74,14 @@ app.get("/api/uploads/:file", async (req, res) => {
         });
         const s3Response = await s3.send(command);
 
+        // Convert S3 stream to buffer
+        const bytes = await s3Response.Body.transformToByteArray();
+        const buffer = Buffer.from(bytes);
+
         // Set correct content type
         res.setHeader("Content-Type", s3Response.ContentType || "image/jpeg");
         
-        // Pipe the S3 stream directly to the response
-        s3Response.Body.pipe(res);
-        return;
+        return res.send(buffer);
       } catch (s3Error) {
         console.error("S3 fetch error:", s3Error);
       }

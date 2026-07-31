@@ -6,6 +6,11 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import s3 from "../config/S3.js"; // AWS S3 config
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const hasValidAWSCredentials = 
   process.env.AWS_ACCESS_KEY_ID && 
@@ -30,7 +35,7 @@ if (hasValidAWSCredentials) {
 } else {
   storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      const dir = "./public/uploads";
+      const dir = path.join(__dirname, "..", "..", "public", "uploads");
       if (!fs.existsSync(dir)){
         fs.mkdirSync(dir, { recursive: true });
       }
@@ -134,7 +139,7 @@ export const deleteS3File = async (fileKey) => {
   if (!fileKey) return;
   if (!hasValidAWSCredentials) {
     try {
-      const localPath = path.join("./public/uploads", fileKey);
+      const localPath = path.join(__dirname, "..", "..", "public", "uploads", fileKey);
       if (fs.existsSync(localPath)) {
         fs.unlinkSync(localPath);
       }
