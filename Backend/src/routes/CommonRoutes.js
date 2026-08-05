@@ -25,6 +25,11 @@ import * as SubscriptionController from "../controller/admin/SubscriptionControl
 import cacheMiddleware from "../middleware/CacheMiddleware.js";
 import cacheKeys from "../utils/cacheKeys.js";
 import { getFranchisePaymentStatus } from "../services/franchise/FranchiseHandlers.js";
+import * as whatsappBooking from "../controller/booking/WhatsAppBookingController.js";
+
+//#region WhatsApp Webhook
+commonRouter.post("/whatsapp/booking", whatsappBooking.receiveBooking);
+//#endregion
 
 //#region Social login
 commonRouter.get(
