@@ -20,7 +20,7 @@ import SeatFilter from "../../models/SessionAreaCount.js";
 import { rollbackCoupanService } from "../../services/vistaServices/promotionCoupan.js";
 import BookingSession from "../../models/BookingSession.js";
 import { createLog } from "../../services/LogsServices.js";
-import { addSeatsExService } from "../../services/vistaServices/AddSeatsExService.js";
+import { addSeatsExService, updateOrderService, continueTransService } from "../../services/vistaServices/AddSeatsExService.js";
 
 //#region initBooking
 export const initBooking = async (req, res) => {
@@ -401,6 +401,71 @@ export const addSeats = async (req, res) => {
       },
     });
     return handleErrorResponse(res, error);
+  }
+};
+//#endregion
+
+//#region updateOrder
+export const updateOrder = async (req, res) => {
+  const { cinemaId, strTransId, strOrderXml } = req.body;
+  try {
+    const result = await updateOrderService({
+      cinemaId,
+      strTransId,
+      strOrderXml,
+    });
+
+    if (result.success) {
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: "Order updated successfully",
+        data: result,
+      });
+    } else {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: result.strException || "Failed to update order",
+        data: result,
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      status: StatusCodes.BAD_REQUEST,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+//#endregion
+
+//#region continueTrans
+export const continueTrans = async (req, res) => {
+  const { cinemaId, strTransId } = req.body;
+  try {
+    const result = await continueTransService({
+      cinemaId,
+      strTransId,
+    });
+
+    if (result.success) {
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: "Transaction extended successfully",
+        data: result,
+      });
+    } else {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: result.strException || "Failed to extend transaction",
+        data: result,
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      status: StatusCodes.BAD_REQUEST,
+      message: error.message,
+      data: null,
+    });
   }
 };
 //#endregion
