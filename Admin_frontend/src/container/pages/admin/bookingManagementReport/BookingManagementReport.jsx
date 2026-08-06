@@ -206,6 +206,7 @@ const BookingManagementReport = () => {
       "Cust_MobileNo",
       "BinExists",
       "devicetype",
+      "Coin_Redemption",
     ];
     setIsBtnLoading(true);
     const formData = new URLSearchParams();
@@ -223,83 +224,81 @@ const BookingManagementReport = () => {
       formData
     )
       .then((res) => {
-        const rows = res?.data?.data?.map((item) => ({
-          initTransId: item?.initTransId ? item?.initTransId : "-",
-          bookingId: item?.addSeatData?.strBookId
-            ? item?.addSeatData?.strBookId
-            : "-",
-          commitStatus: item?.commitStatus ? "Success" : "Fail",
-          paymentsStatus: item?.paymentsStatus ? "Success" : "Fail",
-          transDate: item?.paymentResponse?.trans_date
-            ? item?.paymentResponse?.trans_date
-            : PagesIndex.moment(item?.createdAt).format("DD/MM/YYYY hh:mm A"),
-          cinemaName: item?.cinemaId?.displayName
-            ? item?.cinemaId?.displayName
-            : "-",
-          movieName: item?.movieId?.name ? item?.movieId?.name : "-",
-          cinemaRefCode: "-",
-          screenName: item?.showId?.screenName ? item?.showId?.screenName : "-",
-          eventName: "-",
-          showDate: item?.showId?.sessionRealShow
-            ? `${PagesIndex.moment(item?.showId?.sessionRealShow).format(
-                "MMM DD, YYYY hh:mm A"
-              )}`
-            : "-",
-          // ticketWiseQty: item?.addSeatData?.strSeatInfo
-          //   ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
-          //       .length
-          //   : "-",
-          ticketWiseQty: item?.commitBookingData?.strSeatInfo
-            ? item?.commitBookingData?.strSeatInfo
-                ?.split("-")[1]
-                ?.trim()
-                ?.split(",").length
-            : "-",
-          // seatInfo: item?.addSeatData?.strSeatInfo
-          //   ? item?.addSeatData?.strSeatInfo
-          //   : "-",
-          seatInfo: item?.commitBookingData?.strSeatInfo
-            ? item?.commitBookingData?.strSeatInfo
-            : "-",
-          areaCat: "-",
-          // ticketQty: item?.addSeatData?.strSeatInfo
-          //   ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
-          //       .length
-          //   : "-",
-          ticketQty: item?.commitBookingData?.strSeatInfo
-            ? item?.commitBookingData?.strSeatInfo
-                ?.split("-")[1]
-                ?.trim()
-                ?.split(",").length
-            : "-",
-          // ticketPrice: item?.addSeatData?.curTicketsTotal
-          //   ? item?.addSeatData?.curTicketsTotal /
-          //     item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
-          //       .length
-          //   : "-",
-          ticketPrice: item?.commitBookingData?.curTicketsTotal
-            ? item?.commitBookingData?.curTicketsTotal /
-              item?.commitBookingData?.strSeatInfo
-                ?.split("-")[1]
-                ?.trim()
-                ?.split(",").length
-            : "-",
-          Item_Desc: "-",
-          ItemWise_Qty: "-",
-          ItemWise_Amt: "-",
-          Inv_Qty: "-",
-          Inv_Amt: item?.finalBookingCalculation?.finalAmount || "-",
-          Additional_Desc: "-",
-          Add_strAmt: "-",
-          Add_Charges:
-            item?.finalBookingCalculation?.convenienceFeesObject?.total || "-",
-          Cust_Emailid: item?.userId?.email ? item?.userId?.email : "-",
-          Cust_MobileNo: item?.userId?.mobileNumber
-            ? item?.userId?.mobileNumber
-            : "-",
-          BinExists: "-",
-          devicetype: item?.bookedFrom ? item?.bookedFrom : "-",
-        }));
+        const rows = res?.data?.data?.map((item) => {
+          const has3D = (item?.commitBookingData?.curTicketsTax3 > 0) || (item?.addSeatData?.curTicketsTax3 > 0);
+          const ticketQty = item?.commitBookingData?.strSeatInfo
+            ? item?.commitBookingData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+            : item?.addSeatData?.strSeatInfo
+            ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+            : 0;
+          const threeDCharges = has3D && ticketQty ? ticketQty * 30 : 0;
+          const coinRedemption = item?.finalBookingCalculation?.rewardDiscountApplied || 0;
+
+          return {
+            initTransId: item?.initTransId ? item?.initTransId : "-",
+            bookingId: item?.addSeatData?.strBookId
+              ? item?.addSeatData?.strBookId
+              : "-",
+            commitStatus: item?.commitStatus ? "Success" : "Fail",
+            paymentsStatus: item?.paymentsStatus ? "Success" : "Fail",
+            transDate: item?.paymentResponse?.trans_date
+              ? item?.paymentResponse?.trans_date
+              : PagesIndex.moment(item?.createdAt).format("DD/MM/YYYY hh:mm A"),
+            cinemaName: item?.cinemaId?.displayName
+              ? item?.cinemaId?.displayName
+              : "-",
+            movieName: item?.movieId?.name ? item?.movieId?.name : "-",
+            cinemaRefCode: "-",
+            screenName: item?.showId?.screenName ? item?.showId?.screenName : "-",
+            eventName: "-",
+            showDate: item?.showId?.sessionRealShow
+              ? `${PagesIndex.moment(item?.showId?.sessionRealShow).format(
+                  "MMM DD, YYYY hh:mm A"
+                )}`
+              : "-",
+            // ticketWiseQty: item?.addSeatData?.strSeatInfo
+            //   ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
+            //       .length
+            //   : "-",
+            ticketWiseQty: ticketQty || "-",
+            // seatInfo: item?.addSeatData?.strSeatInfo
+            //   ? item?.addSeatData?.strSeatInfo
+            //   : "-",
+            seatInfo: item?.commitBookingData?.strSeatInfo
+              ? item?.commitBookingData?.strSeatInfo
+              : "-",
+            areaCat: "-",
+            // ticketQty: item?.addSeatData?.strSeatInfo
+            //   ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
+            //       .length
+            //   : "-",
+            ticketQty: ticketQty || "-",
+            // ticketPrice: item?.addSeatData?.curTicketsTotal
+            //   ? item?.addSeatData?.curTicketsTotal /
+            //     item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",")
+            //       .length
+            //   : "-",
+            ticketPrice: item?.commitBookingData?.curTicketsTotal
+              ? item?.commitBookingData?.curTicketsTotal / ticketQty
+              : "-",
+            Item_Desc: "-",
+            ItemWise_Qty: "-",
+            ItemWise_Amt: "-",
+            Inv_Qty: "-",
+            Inv_Amt: item?.finalBookingCalculation?.finalAmount || "-",
+            Additional_Desc: threeDCharges > 0 ? "3D Glasses" : "-",
+            Add_strAmt: threeDCharges > 0 ? threeDCharges : "-",
+            Add_Charges:
+              item?.finalBookingCalculation?.convenienceFeesObject?.total || "-",
+            Cust_Emailid: item?.userId?.email ? item?.userId?.email : "-",
+            Cust_MobileNo: item?.userId?.mobileNumber
+              ? item?.userId?.mobileNumber
+              : "-",
+            BinExists: "-",
+            devicetype: item?.bookedFrom ? item?.bookedFrom : "-",
+            coinRedemption: coinRedemption || 0,
+          };
+        });
         const workbook = PagesIndex.XLSX.utils.book_new();
         const worksheet = PagesIndex.XLSX.utils.json_to_sheet(rows);
 
@@ -606,6 +605,15 @@ const isListEmpty = !bookingsList || bookingsList.length === 0;
                     <Index.TableBody>
                       {filterDataList?.length ? (
                         filterDataList?.map((item, index) => {
+                          const has3D = (item?.commitBookingData?.curTicketsTax3 > 0) || (item?.addSeatData?.curTicketsTax3 > 0);
+                          const ticketQty = item?.commitBookingData?.strSeatInfo
+                            ? item?.commitBookingData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+                            : item?.addSeatData?.strSeatInfo
+                            ? item?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+                            : 0;
+                          const threeDCharges = has3D && ticketQty ? ticketQty * 30 : 0;
+                          const coinRedemption = item?.finalBookingCalculation?.rewardDiscountApplied || 0;
+
                           let userDetails = (
                             <>
                               {`${
@@ -627,18 +635,18 @@ const isListEmpty = !bookingsList || bookingsList.length === 0;
                               onClick={() => handleOpen(item)}
                             >
                               <Index.TableCell>
-                                <Index.Box className="vertical-img-box">
-                                  <img
-                                    src={
-                                      item?.movieId?.poster
-                                        ? `${PagesIndex.IMAGES_API_ENDPOINT}/${item?.movieId?.poster}`
-                                        : PagesIndex.Png.NoImageAvailable
-                                    }
-                                    className="vertical-img"
-                                    onClick={handleClose}
-                                    alt=""
-                                  />
-                                </Index.Box>
+                                  <Index.Box className="vertical-img-box">
+                                    <img
+                                      src={
+                                        item?.movieId?.poster
+                                          ? `${PagesIndex.IMAGES_API_ENDPOINT}/${item?.movieId?.poster}`
+                                          : PagesIndex.Png.NoImageAvailable
+                                      }
+                                      className="vertical-img"
+                                      onClick={handleClose}
+                                      alt=""
+                                    />
+                                  </Index.Box>
                               </Index.TableCell>
                               <Index.TableCell>
                                 <b>{item?.movieId?.name}</b> <br></br>
@@ -653,15 +661,7 @@ const isListEmpty = !bookingsList || bookingsList.length === 0;
                                   item?.addSeatData?.strSeatInfo}
                                 <br></br>
                                 <b>Total seat :</b>{" "}
-                                {item?.setSeatData?.strSeatInfo
-                                  ? item?.setSeatData?.strSeatInfo
-                                      ?.split("-")[1]
-                                      ?.trim()
-                                      ?.split(",").length
-                                  : item?.addSeatData?.strSeatInfo
-                                      ?.split("-")[1]
-                                      ?.trim()
-                                      ?.split(",").length}
+                                {ticketQty || 0}
                                 <br></br>
                                 <b>Total Amount :</b>{" "}
                                 {item?.paymentResponse?.amount ?(item?.paymentResponse?.amount)?.toLocaleString("en-IN", {
@@ -670,9 +670,21 @@ const isListEmpty = !bookingsList || bookingsList.length === 0;
                                 }): "-"}
                                 <br></br>
                                 <b>Device Type :</b> {item?.bookedFrom || "-"}
-                                 <br></br>
-                              <b>Earned Reward :</b>{" "}
-                              {item?.rewardData?.coins ? `${item?.rewardData?.coins} pts` :  "-"}
+                                <br></br>
+                                <b>Earned Reward :</b>{" "}
+                                {item?.rewardData?.coins ? `${item?.rewardData?.coins} pts` :  "-"}
+                                {threeDCharges > 0 && (
+                                  <>
+                                    <br></br>
+                                    <b>3D Charges :</b> ₹{threeDCharges.toFixed(2)}
+                                  </>
+                                )}
+                                {coinRedemption > 0 && (
+                                  <>
+                                    <br></br>
+                                    <b>Coin Redemption :</b> ₹{coinRedemption.toFixed(2)}
+                                  </>
+                                )}
                               </Index.TableCell>
                               <Index.TableCell
                                 component="td"
@@ -1365,6 +1377,32 @@ const isListEmpty = !bookingsList || bookingsList.length === 0;
                       </Index.Box>{" "}
                       {data?.bookedFrom || "-"}
                     </Index.Box>
+                    {(() => {
+                      const modalHas3D = (data?.commitBookingData?.curTicketsTax3 > 0) || (data?.addSeatData?.curTicketsTax3 > 0);
+                      const modalTicketQty = data?.commitBookingData?.strSeatInfo
+                        ? data?.commitBookingData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+                        : data?.addSeatData?.strSeatInfo
+                        ? data?.addSeatData?.strSeatInfo?.split("-")[1]?.trim()?.split(",").length
+                        : 0;
+                      const modalThreeDCharges = modalHas3D && modalTicketQty ? modalTicketQty * 30 : 0;
+                      const modalCoinRedemption = data?.finalBookingCalculation?.rewardDiscountApplied || 0;
+                      return (
+                        <>
+                          <Index.Box className="log-text">
+                            <Index.Box className="log-text-title" component="span">
+                              3D Charges :
+                            </Index.Box>{" "}
+                            {modalThreeDCharges > 0 ? `₹${modalThreeDCharges.toFixed(2)}` : "-"}
+                          </Index.Box>
+                          <Index.Box className="log-text">
+                            <Index.Box className="log-text-title" component="span">
+                              Coin Redemption :
+                            </Index.Box>{" "}
+                            {modalCoinRedemption > 0 ? `₹${modalCoinRedemption.toFixed(2)}` : "-"}
+                          </Index.Box>
+                        </>
+                      );
+                    })()}
                   </Index.Box>
                 </Index.Box>
               </Index.Box>
